@@ -34,7 +34,7 @@ public class OssController {
         try {
             /** 生成随机数文件并写入到文件夹**/
             String randomUUID = UUID.randomUUID().toString() + "-" + TimeUtil.getCurrentTimeString();
-            pathName = FileConstant.PATH_DIRECTORY + randomUUID + ".png";
+            pathName = FileConstant.PATH_DIRECTORY + randomUUID;
             FileOutputStream fileOutputStream = new FileOutputStream(new File(pathName));
             byte[] b =new byte[1024];
             int flag;
