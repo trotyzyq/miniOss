@@ -1,6 +1,8 @@
 package com.trotyzyq;
 
 import com.alibaba.fastjson.JSON;
+import org.apache.commons.io.IOUtils;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +46,11 @@ public class OssController {
             }
             result.setCode(1);
             result.setPathName(FileConstant.GETFILE_PATH_URL+pathName);
+
+            /** 保存到文件记录文件**/
+            File recordFile = new File(FileConstant.OSS_RECORD_PATH);
+            OutputStream os = new FileOutputStream(recordFile);
+            IOUtils.write(pathName + "成功上传",os, "utf-8");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -77,7 +84,11 @@ public class OssController {
                 fileOutputStream.write(b,0,flag);
             }
             result.setCode(1);
-            result.setPathName(pathName);
+            result.setPathName(FileConstant.GETFILE_PATH_URL + pathName);
+            /** 保存到文件记录文件**/
+            File recordFile = new File(FileConstant.OSS_RECORD_PATH);
+            OutputStream os = new FileOutputStream(recordFile);
+            IOUtils.write(pathName + "成功上传",os, "utf-8");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -85,7 +96,7 @@ public class OssController {
     }
 
     @RequestMapping(value = "/getFile",method = RequestMethod.GET)
-    public void getFile(HttpServletRequest request, HttpServletResponse response, String path) throws IOException {
+    public void getFile(HttpServletResponse response,  String path) throws IOException {
         FileInputStream fileInputStream =new FileInputStream(new File(path));
         OutputStream outputStream = response.getOutputStream();
         byte[] b = new byte[1024];
@@ -97,15 +108,15 @@ public class OssController {
         outputStream.close();
     }
 
-    @RequestMapping(value = "/deleteFile",method = RequestMethod.GET)
-    public void deleteFile(HttpServletRequest request, HttpServletResponse response, String path) throws IOException {
+    @RequestMapping(value = "/delete",method = RequestMethod.GET)
+    public void deleteFile(String path) throws IOException {
         File deleteFile = new File(path);
         if(deleteFile.exists() && deleteFile.isFile()){
             deleteFile.delete();
         }
     }
 
-    @RequestMapping(value = "/downloadFile")
+    @RequestMapping(value = "/download",method = RequestMethod.GET)
     public void downloadFile(HttpServletResponse response, String path) throws IOException {
         response.setHeader("Content-Disposition", "attachment;Filename=" + path);
         FileInputStream fileInputStream =new FileInputStream(new File(path));

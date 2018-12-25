@@ -19,5 +19,5 @@ get http://www.insistself.cn:9002/oss/getFile
 
 ### 下载
 浏览器提交  
-http://www.insistself.cn:9002/oss/getFile  
+http://www.insistself.cn:9002/oss/download  
 参数:path 文件路径  
