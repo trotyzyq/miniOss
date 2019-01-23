@@ -34,7 +34,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
 	testImplementation('org.springframework.boot:spring-boot-starter-test')
 	compile group: 'com.alibaba', name: 'fastjson', version: '1.2.9'
-    // https://mvnrepository.com/artifact/commons-io/commons-io
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
-
+	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.6'
+	compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.6'
 }
