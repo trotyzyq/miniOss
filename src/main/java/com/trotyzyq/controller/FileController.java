@@ -1,6 +1,13 @@
-package com.trotyzyq;
+package com.trotyzyq.controller;
 
+import com.alibaba.fastjson.JSONObject;
+import com.trotyzyq.config.FileConfiger;
+import com.trotyzyq.entity.bo.JsonObjectBO;
+import com.trotyzyq.entity.bo.ResponseCode;
+import com.trotyzyq.util.TimeUtil;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,19 +26,22 @@ import java.io.*;
  */
 @RequestMapping("/fileService")
 @RestController
-public class OssController2 {
+public class FileController {
 
     /** 配置类**/
     @Autowired
     private FileConfiger fileConfiger;
 
+    /** 日志记录**/
+    private Logger logger = LoggerFactory.getLogger(FileController.class);
+
     /**
      * 二进制文件上传文件
      * @param request
-     * @return
+     * @return JsonObjectBO
      */
     @RequestMapping(value = "/uploadFile",method = RequestMethod.POST)
-    public String uploadFile(HttpServletRequest request){
+    public JsonObjectBO uploadFile(HttpServletRequest request){
         ServletInputStream servletInputStream = null;
         String path = "";
         try {
@@ -44,7 +54,7 @@ public class OssController2 {
             /** 生成随机数文件并写入到文件夹**/
             path = dicPath + TimeUtil.getCurrentTimeString().replaceAll("\\s","")
                     .replaceAll("-","").replaceAll("//","")
-                    .replaceAll(":","");
+                    .replaceAll(":","") ;
             FileOutputStream fileOutputStream = new FileOutputStream(new File(path));
             servletInputStream = request.getInputStream();
             IOUtils.copy(servletInputStream,fileOutputStream);
@@ -53,19 +63,27 @@ public class OssController2 {
             File recordFile = new File(fileConfiger.getOssRecordPath());
             OutputStream os = new FileOutputStream(recordFile);
             IOUtils.write(path + "成功上传",os, "utf-8");
+
+            /** 保存成功 设置返回路径**/
+            JSONObject pathJSON = new JSONObject();
+            pathJSON.put("path",path);
+            return new JsonObjectBO(ResponseCode.NORMAL, "上传文件成功",pathJSON);
         } catch (IOException e) {
+            return new JsonObjectBO(ResponseCode.SERVER_ERROR, "上传文件失败",null);
         }
-        return path;
     }
 
     /**
      * 表单上传文件
-     * @param request
      * @param multipartFile 文件
-     * @return String
+     * @return JsonObjectBO
      */
     @RequestMapping(value = "/uploadFile2",method = RequestMethod.POST)
-    public String uploadFile(HttpServletRequest request, MultipartFile multipartFile){
+    public JsonObjectBO uploadFile( MultipartFile multipartFile, String token){
+        /** 判断token是否相同 **/
+        if(!token.equals(fileConfiger.getToken())){
+             return new JsonObjectBO(ResponseCode.SERVER_ERROR, "上传文件失败,token不一致",null);
+        }
         /** 获取后缀名 **/
         String fileName = multipartFile.getOriginalFilename();
         String[] patten = fileName.split("\\.");
@@ -91,17 +109,20 @@ public class OssController2 {
             File recordFile = new File(fileConfiger.getOssRecordPath());
             OutputStream os = new FileOutputStream(recordFile);
             IOUtils.write(path + "成功上传",os, "utf-8");
-        } catch (IOException e) {
-        }
 
-        return path;
+            /** 保存成功 设置返回路径**/
+            JSONObject pathJSON = new JSONObject();
+            pathJSON.put("path",path);
+            return new JsonObjectBO(ResponseCode.NORMAL, "上传文件成功",pathJSON);
+        } catch (IOException e) {
+            return new JsonObjectBO(ResponseCode.SERVER_ERROR, "上传文件失败",null);
+        }
     }
 
     /**
      * 获取文件
      * @param response
      * @param path 文件路径，不包含服务器
-     * @throws IOException
      */
     @RequestMapping(value = "/upload/{date}/{path:.*}",method = RequestMethod.GET)
     public void getFile(HttpServletResponse response, @PathVariable("date") String date,
@@ -125,25 +146,31 @@ public class OssController2 {
     /**
      * 删除文件
      * @param path 文件路径 不包含文件
-     * @throws IOException
+     * @return  JsonObjectBO
      */
-    @RequestMapping(value = "/delete/upload/{date}/{path:.*}",method = RequestMethod.GET)
-    public boolean deleteFile( @PathVariable("date") String date,
-                            @PathVariable("path") String path) {
+    @RequestMapping(value = "/delete/upload/{date}/{path:.*}",method = RequestMethod.POST)
+    public String deleteFile( @PathVariable("date") String date,
+                            @PathVariable("path") String path, String token) {
+        /** 判断token是否相同 **/
+        if(!token.equals(fileConfiger.getToken())){
+            return JSONObject.toJSONString( new JsonObjectBO(ResponseCode.SERVER_ERROR, "删除失败,token不一致",null));
+        }
         path = fileConfiger.getPathDirectory() + date + "/" + path;
         boolean success = false;
         File deleteFile = new File(path);
         if(deleteFile.exists() && deleteFile.isFile()){
             success = deleteFile.delete();
         }
-        return success;
+        if(success){
+            return JSONObject.toJSONString(new JsonObjectBO(ResponseCode.NORMAL, "删除成功",null));
+        }
+        return JSONObject.toJSONString(new JsonObjectBO(ResponseCode.SERVER_ERROR, "删除失败",null));
     }
 
     /**
      * 下载文件
      * @param response
      * @param path 文件路径，不包含服务器路径
-     * @throws IOException
      */
     @RequestMapping(value = "/download/upload/{date}/{path:.*}",method = RequestMethod.GET)
     public void downloadFile(HttpServletResponse response,@PathVariable("date") String date,
@@ -159,8 +186,6 @@ public class OssController2 {
             OutputStream os = new FileOutputStream(recordFile);
             IOUtils.write(path + "成功下载",os, "utf-8");
         }catch (Exception e){
-
         }
-
     }
 }

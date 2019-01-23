@@ -1,10 +1,10 @@
-package com.trotyzyq;
+package com.trotyzyq.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 配置类
+ * 服务端配置类
  * @author zyq
  */
 @Component
@@ -17,6 +17,8 @@ public class FileConfiger {
     private String getFilePathUrl;
     /** 日志记录路径 **/
     private String ossRecordPath;
+    /** token**/
+    private String token;
 
     public String getPathDirectory() {
         return pathDirectory;
@@ -40,5 +42,13 @@ public class FileConfiger {
 
     public void setOssRecordPath(String ossRecordPath) {
         this.ossRecordPath = ossRecordPath;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
