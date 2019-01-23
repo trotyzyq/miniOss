@@ -14,11 +14,4 @@ oss:
   deleteServerUrl : http://localhost:9002/fileService/delete
 
   token : 38x3123dc35r5
-#logback配置
-logging:
-  config:
-    classpath:
-      config/logback-spring:xml
-  path: log
-  file: loginfo
 

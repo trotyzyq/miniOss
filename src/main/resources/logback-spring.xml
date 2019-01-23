@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <configuration>
-    <!--<property name="LOG_HOME" value="${LOG_PATH}/${LOG_FILE}" />-->
+    <!-- 项目名称 -->
+    <property name="PROJECT_NAME" value="projectmanage"/>
+
+    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
     <property name="LOG_HOME" value="${catalina.base:-.}/logs"/>
     <!-- 彩色日志 -->
     <!-- 彩色日志依赖的渲染类 -->
@@ -30,21 +33,15 @@
 
 
     <!-- 按照每天生成日志文件 -->
-    <appender name="INFO"
+    <appender name="FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_HOME}/%d{yyyyMMdd}/info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_HOME}/%d{yyyy-MM-dd}/output.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxHistory>7</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>200MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_HOME}/%d{yyyy-MM-dd}/info.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
             <pattern>${FILE_PATTERN}</pattern>
@@ -78,7 +75,7 @@
     <!-- 生产环境下，将此级别配置为适合的级别，以免日志文件太多或影响程序性能 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="INFO"/>
+        <appender-ref ref="FILE"/>
         <appender-ref ref="ERROR"/>
     </root>
 </configuration>

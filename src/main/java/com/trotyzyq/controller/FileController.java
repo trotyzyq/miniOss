@@ -69,6 +69,7 @@ public class FileController {
             pathJSON.put("path",path);
             return new JsonObjectBO(ResponseCode.NORMAL, "上传文件成功",pathJSON);
         } catch (IOException e) {
+            logger.error(path + "上传失败");
             return new JsonObjectBO(ResponseCode.SERVER_ERROR, "上传文件失败",null);
         }
     }
@@ -113,8 +114,10 @@ public class FileController {
             /** 保存成功 设置返回路径**/
             JSONObject pathJSON = new JSONObject();
             pathJSON.put("path",path);
+            logger.info(path + "上传成功");
             return new JsonObjectBO(ResponseCode.NORMAL, "上传文件成功",pathJSON);
         } catch (IOException e) {
+            logger.error(path + "上传失败");
             return new JsonObjectBO(ResponseCode.SERVER_ERROR, "上传文件失败",null);
         }
     }
@@ -162,8 +165,10 @@ public class FileController {
             success = deleteFile.delete();
         }
         if(success){
+            logger.info(path + "删除成功");
             return JSONObject.toJSONString(new JsonObjectBO(ResponseCode.NORMAL, "删除成功",null));
         }
+        logger.error(path + "删除失败");
         return JSONObject.toJSONString(new JsonObjectBO(ResponseCode.SERVER_ERROR, "删除失败",null));
     }
 
@@ -186,6 +191,7 @@ public class FileController {
             OutputStream os = new FileOutputStream(recordFile);
             IOUtils.write(path + "成功下载",os, "utf-8");
         }catch (Exception e){
+            logger.error(path + "下载失败");
         }
     }
 }
