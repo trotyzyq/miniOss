@@ -2,86 +2,75 @@ package com.trotyzyq.util;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.trotyzyq.config.OssClientConfiger;
+import com.trotyzyq.entity.bo.FileDataEntity;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @Author zyq on 2018/11/1.
  * 操作oss文件的工具类
  */
+@Component
 public class MyFileUtil {
 
-    /**
-     * 文件流上传文件，不包含其他参数
-     * @param url 上传地址
-     * @param file 文件
-     * @return 成功：全路径
-     */
-    public static String uploadFile(String url, MultipartFile file)  {
-        CloseableHttpClient httpClient = null;
-        HttpPost httpPost = null;
-        try {
-            httpClient = HttpClients.createDefault();
-            httpPost = new HttpPost(url);
-            InputStreamEntity inputEntry = new InputStreamEntity(file.getInputStream());
-            httpPost.setEntity(inputEntry);
-            CloseableHttpResponse response = httpClient.execute(httpPost);
-            HttpEntity httpEntity = response.getEntity();
-            /** 上传结果解析**/
-            String uploadResult = EntityUtils.toString(httpEntity,"utf-8");
-            response.close();
-            httpClient.close();
-            JSONObject jsonObject = JSON.parseObject(uploadResult);
-            if(jsonObject.getInteger("code") == 1){
-                return jsonObject.getJSONObject("data").getString("path");
-            }else{
-                return null;
-            }
-        }catch (Exception e){
-            return null;
-        }finally{
-            try {
-                if(httpPost!=null){
-                    httpPost.releaseConnection();
-                }
-                if(httpClient!=null){
-                    httpClient.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    @Autowired
+    private OssClientConfiger ossClientConfiger;
 
-    }
 
     /**
      * 删除文件
      * @param url 删除地址
-     * @param params 其他参数包括token
+     * @param path 路径
+     * 成功true 失败false
      */
-    public static boolean deleteFile(String url,Map<String, String> params){
+    public  boolean deleteFile(String url,String path){
+        Map map = new HashMap<>();
+        map .put("timeStamp",System.currentTimeMillis() + "");
+        map.put("token", ossClientConfiger.getToken());
+        map.put("path",path);
+
+        /** 生成参数 **/
+        String mapStr = RsaSignature.getSignCheckContentV2(map);
+
+        /** 加签 **/
+        String sign = RsaSignature.rsa256Sign(mapStr, ossClientConfiger.getClientPrivateKey());
+        map.put("sign",sign);
+
+        /** 加密 **/
+        String msgSignStr = JSON.toJSONString(map);
+        String enStr = RsaSignature.rsaEncrypt(msgSignStr,ossClientConfiger.getServerPublicKey());
+
+
         CloseableHttpClient httpClient = HttpClients.createDefault();
         String result = "";
         try {
             HttpPost httpPost = new HttpPost(url);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            for (String pKey : params.keySet()) {
-                builder.addTextBody(pKey,params.get(pKey));
-            }
+            builder.addTextBody("params",enStr);
             HttpEntity entity = builder.build();
             httpPost.setEntity(entity);
             HttpResponse response = httpClient.execute(httpPost);// 执行提交
@@ -111,29 +100,51 @@ public class MyFileUtil {
     /**
      * 表单提交文件
      * @param url 提交服务器路径
-     * @param file 文件
-     * @param paramsMap 其他参数
-     * @return
+     * @param fileList 文件
+     * @return 成功：全路径，失败null
      */
-    public static String uploadFile(String url, MultipartFile file, Map<String,String> paramsMap) {
+    public  List<String> uploadFileWithForm(String url, List<FileDataEntity> fileList) {
+        Map map = new HashMap<>();
+        map .put("timeStamp",System.currentTimeMillis() + "");
+        map.put("token", ossClientConfiger.getToken());
+
+        /** 生成参数 **/
+        String mapStr = RsaSignature.getSignCheckContentV2(map);
+
+        /** 加签 **/
+        String sign = RsaSignature.rsa256Sign(mapStr, ossClientConfiger.getClientPrivateKey());
+        map.put("sign",sign);
+
+        /** 加密 **/
+        String msgSignStr = JSON.toJSONString(map);
+        String enStr = RsaSignature.rsaEncrypt(msgSignStr,ossClientConfiger.getServerPublicKey());
+
+
         CloseableHttpClient httpClient = HttpClients.createDefault();
         String result = "";
         try {
-            String fileName = file.getOriginalFilename();
             HttpPost httpPost = new HttpPost(url);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.addBinaryBody("multipartFile", file.getInputStream(), ContentType.MULTIPART_FORM_DATA, fileName);// 文件流
-            for (String pKey : paramsMap.keySet()) {
-                builder.addTextBody(pKey,paramsMap.get(pKey));
+            builder.setCharset(Charset.forName("UTF-8"));
+
+
+            for(int i =0 ;i < fileList.size() ;i++){
+                FileDataEntity fileDataEntity = fileList.get(i);
+                String fileName = fileDataEntity.getFileName();
+                builder.addBinaryBody("multipartFiles" + i,fileDataEntity.getFileInputStream(), ContentType.MULTIPART_FORM_DATA, fileName);
             }
+            builder.addTextBody("params",enStr);
             HttpEntity entity = builder.build();
             httpPost.setEntity(entity);
             HttpResponse response = httpClient.execute(httpPost);// 执行提交
             HttpEntity responseEntity = response.getEntity();
             result = EntityUtils.toString(responseEntity, Charset.forName("UTF-8"));
+            /** 解析请求**/
             JSONObject jsonObject = JSON.parseObject(result);
             if(jsonObject.getInteger("code") == 1){
-                return jsonObject.getJSONObject("data").getString("path");
+                JSONArray pathArray = jsonObject.getJSONObject("data").getJSONArray("path");
+                List pathList = pathArray.subList(0,pathArray.size());
+                return pathList;
             }else{
                 return null;
             }

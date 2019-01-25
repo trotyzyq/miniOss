@@ -22,3 +22,13 @@ get http://www.insistself.cn:9002/oss/getFile
 浏览器提交  
 http://www.insistself.cn:9002/oss/download  
 参数:path 文件路径  
+
+
+
+删除失败导致的垃圾堆积
+token被拦截
+效率不高
+被删除文件有问题
+
+确保不被攻击
+文件大小限制

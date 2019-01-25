@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
  * @author zyq
  */
 @Component
-@ConfigurationProperties(prefix="oss")
-public class ClientConfiger {
+@ConfigurationProperties(prefix="ossClient")
+public class OssClientConfiger {
 
     /** 服务器地址**/
     private String ossServerUrl;
@@ -19,6 +19,15 @@ public class ClientConfiger {
 
     /** token**/
     private String token;
+
+    /** 客户端私钥**/
+    private String clientPrivateKey;
+
+    /** 客户端公钥**/
+    private String clientPublicKey;
+
+    /** 服务端公钥**/
+    private String serverPublicKey;
 
     public String getOssServerUrl() {
         return ossServerUrl;
@@ -42,6 +51,30 @@ public class ClientConfiger {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getClientPrivateKey() {
+        return clientPrivateKey;
+    }
+
+    public void setClientPrivateKey(String clientPrivateKey) {
+        this.clientPrivateKey = clientPrivateKey;
+    }
+
+    public String getClientPublicKey() {
+        return clientPublicKey;
+    }
+
+    public void setClientPublicKey(String clientPublicKey) {
+        this.clientPublicKey = clientPublicKey;
+    }
+
+    public String getServerPublicKey() {
+        return serverPublicKey;
+    }
+
+    public void setServerPublicKey(String serverPublicKey) {
+        this.serverPublicKey = serverPublicKey;
     }
 }
 
