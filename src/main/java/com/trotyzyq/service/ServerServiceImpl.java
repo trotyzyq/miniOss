@@ -1,10 +1,7 @@
 package com.trotyzyq.service;
 
 import com.trotyzyq.config.OssServerConfiger;
-import com.trotyzyq.controller.ServerController;
 import com.trotyzyq.entity.bo.FileDataEntity;
-import com.trotyzyq.entity.bo.JsonObjectBO;
-import com.trotyzyq.entity.bo.ResponseCode;
 import com.trotyzyq.util.TimeUtil;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -68,6 +65,7 @@ public class ServerServiceImpl implements  IServerService {
                     recordFile.createNewFile();
                 }
                 List<String> lines = IOUtils.readLines(new FileInputStream(recordFile));
+
                 lines.add(path + "成功上传");
                 OutputStream os = new FileOutputStream(recordFile);
                 IOUtils.writeLines(lines, IOUtils.LINE_SEPARATOR, os);

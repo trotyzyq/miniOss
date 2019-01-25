@@ -8,23 +8,16 @@ import com.trotyzyq.config.OssClientConfiger;
 import com.trotyzyq.entity.bo.FileDataEntity;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
@@ -44,14 +37,13 @@ public class MyFileUtil {
     /**
      * 删除文件
      * @param url 删除地址
-     * @param path 路径
+     * @param pathJson 路径
      * 成功true 失败false
      */
-    public  boolean deleteFile(String url,String path){
+    public  boolean deleteFile(String url,String pathJson){
         Map map = new HashMap<>();
         map .put("timeStamp",System.currentTimeMillis() + "");
         map.put("token", ossClientConfiger.getToken());
-        map.put("path",path);
 
         /** 生成参数 **/
         String mapStr = RsaSignature.getSignCheckContentV2(map);
@@ -71,6 +63,7 @@ public class MyFileUtil {
             HttpPost httpPost = new HttpPost(url);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.addTextBody("params",enStr);
+            builder.addTextBody("pathJson",pathJson);
             HttpEntity entity = builder.build();
             httpPost.setEntity(entity);
             HttpResponse response = httpClient.execute(httpPost);// 执行提交

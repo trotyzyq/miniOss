@@ -143,13 +143,11 @@ public class ServerController {
      * @param response
      * @param path 文件路径，不包含服务器
      */
-    @RequestMapping(value = "/upload/{date}/{path:.*}",method = RequestMethod.GET)
-    public void getFile(HttpServletResponse response, @PathVariable("date") String date,
-                        @PathVariable("path") String path){
+    @RequestMapping(value = "/getFile",method = RequestMethod.GET)
+    public void getFile(HttpServletResponse response,String path){
         OutputStream outputStream = null;
         try {
             outputStream = response.getOutputStream();
-            path = ossServerConfiger.getPathDirectory() + date + "/" + path;
             File file = new File(path);
             if(!file.exists()){
                 outputStream.write("no this file".getBytes());
@@ -164,14 +162,19 @@ public class ServerController {
 
     /**
      * 删除文件
-     * @param path 文件路径 不包含文件
+     * @param pathJson 文件路径json
      * @return  JsonObjectBO
      */
-    @RequestMapping(value = "/delete/upload/{date}/{path:.*}",method = RequestMethod.POST)
-    public String deleteFile( @PathVariable("date") String date,
-                            @PathVariable("path") String path, String params) {
-        if(params == null){
+    @RequestMapping(value = "/delete",method = RequestMethod.POST)
+    public String deleteFile( String pathJson, String params) {
+        if(StringUtil.isNull(params) || StringUtil.isNull(pathJson)){
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "参数错误",null));
+        }
+        JSONArray pathArray = null;
+        try {
+            pathArray = JSON.parseArray(pathJson);
+        }catch (Exception e){
+            return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "json参数异常",null));
         }
 
         /** 判断解密是否成功**/
@@ -190,23 +193,75 @@ public class ServerController {
         if(! map.get("token").equals(ossServerConfiger.getToken())){
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "token无效",null));
         }
-        /** 判断签名的信息是否与上次路径的一致**/
-        path = ossServerConfiger.getPathDirectory() + date + "/" + path;
-        if(!path.equals(map.get("path"))){
-            return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "文件名无效",null));
-        }
+
 
         boolean success = false;
-        File deleteFile = new File(path);
-        if(deleteFile.exists() && deleteFile.isFile()){
-            success = deleteFile.delete();
+        List<String> copyList = new ArrayList<>();
+        FileOutputStream fileOutputStream = null;
+        try {
+            for(int i = 0; i < pathArray.size(); i++){
+                String path = pathArray.getString(i);
+                File deleteFile = new File(path);
+                String copyPath = path + ".copy";
+                /** 将复制的保存下来**/
+                copyList.add(copyPath);
+
+
+                /** 删除之前先复制一份**/
+                FileInputStream fileInputStream = new FileInputStream(new File(path));
+                fileOutputStream = new FileOutputStream(new File(copyPath));
+                IOUtils.copy(fileInputStream, fileOutputStream);
+
+                if(deleteFile.exists() && deleteFile.isFile()){
+                    success = deleteFile.delete();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            success  = false;
         }
-        if(success){
-            logger.info(path + "删除成功");
-            return JSON.toJSONString(new JsonObjectBO(ResponseCode.NORMAL, "删除成功",null));
+
+        /** 如果删除失败，还原**/
+        if(!success){
+            logger.info(JSON.toJSONString(pathArray) + "删除失败");
+            for(int i =0 ;i< copyList.size();i++){
+                String copyPath = copyList.get(i);
+                String path = copyPath.substring(0,copyPath.length()-5);
+
+                FileInputStream fileInputStream = null;
+                try {
+                    fileInputStream = new FileInputStream(new File(copyPath));
+                    fileOutputStream = new FileOutputStream(new File(path));
+                    IOUtils.copy(fileInputStream, fileOutputStream);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            /** 还原之后将copy的删除**/
+            for(int i =0 ;i< copyList.size();i++){
+                String copyPath = copyList.get(i);
+
+                File file = new File(copyPath);
+                if(file.exists() && file.isFile()){
+                    success = file.delete();
+                }
+            }
+            return JSON.toJSONString(new JsonObjectBO(ResponseCode.SERVER_ERROR, "删除失败",null));
         }
-        logger.error(path + "删除失败");
-        return JSON.toJSONString(new JsonObjectBO(ResponseCode.SERVER_ERROR, "删除失败",null));
+
+        /** 如果成功，将复制的全部删除**/
+        for(int i =0 ;i< copyList.size();i++){
+            String copyPath = copyList.get(i);
+
+            File file = new File(copyPath);
+            if(file.exists() && file.isFile()){
+                success = file.delete();
+            }
+        }
+
+        logger.info(JSON.toJSONString(pathArray) + "删除成功");
+        return JSON.toJSONString(new JsonObjectBO(ResponseCode.NORMAL, "删除成功",null));
     }
 
     /**
