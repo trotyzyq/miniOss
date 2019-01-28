@@ -107,7 +107,7 @@ public class ServerController {
             return new JsonObjectBO(ResponseCode.SERVER_ERROR, "系统错误",null);
         }
 
-        if(fileList.size() == 0 || params == null){
+        if(fileList.size() == 0 || StringUtil.isNull(params)){
             return new JsonObjectBO(ResponseCode.INVALID_INPUT, "参数错误",null);
         }
 
@@ -116,6 +116,7 @@ public class ServerController {
         if(StringUtil.isNull(decryptMsg)){
             return new JsonObjectBO(ResponseCode.INVALID_INPUT, "解密错误",null);
         }
+
         Map map = JSON.parseObject(decryptMsg, Map.class);
         boolean deSignSuccess  = RsaSignature.rsaCheckV2(map,ossServerConfiger.getClientPublicKey());
 
@@ -269,10 +270,8 @@ public class ServerController {
      * @param response
      * @param path 文件路径，不包含服务器路径
      */
-    @RequestMapping(value = "/download/upload/{date}/{path:.*}",method = RequestMethod.GET)
-    public void downloadFile(HttpServletResponse response,@PathVariable("date") String date,
-                             @PathVariable("path") String path){
-        path = ossServerConfiger.getPathDirectory() + date + "/" + path;
+    @RequestMapping(value = "/download/",method = RequestMethod.GET)
+    public void downloadFile(HttpServletResponse response,String path){
         response.setHeader("Content-Disposition", "attachment;Filename=" + path);
         try {
             FileInputStream fileInputStream =new FileInputStream(new File(path));

@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +31,7 @@ public class TestController {
     private MyFileUtil myFileUtil;
     /** 测试提交**/
     @RequestMapping("/test1")
-    public String test(MultipartFile m1,MultipartFile m2,MultipartFile m3,MultipartFile m4){
+    public String test(MultipartFile m1){
         List<String> pathList = null;
         try {
             String fileName = m1.getOriginalFilename();
@@ -36,17 +39,17 @@ public class TestController {
             List<FileDataEntity> flleList = new ArrayList<>();
             flleList.add(fileDataEntity);
 
-            fileName = m2.getOriginalFilename();
-            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-            flleList.add(fileDataEntity);
-
-            fileName = m3.getOriginalFilename();
-            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-            flleList.add(fileDataEntity);
-
-            fileName = m4.getOriginalFilename();
-            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-            flleList.add(fileDataEntity);
+//            fileName = m2.getOriginalFilename();
+//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+//            flleList.add(fileDataEntity);
+//
+//            fileName = m3.getOriginalFilename();
+//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+//            flleList.add(fileDataEntity);
+//
+//            fileName = m4.getOriginalFilename();
+//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+//            flleList.add(fileDataEntity);
 
             pathList = myFileUtil.uploadFileWithForm(ossClientConfiger.getOssServerUrl(),flleList);
         } catch (IOException e) {
@@ -67,5 +70,13 @@ public class TestController {
         boolean s2 = myFileUtil.deleteFile(ossClientConfiger.getDeleteServerUrl(), pathJson);
         System.out.println(s2);
         return s2;
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
+        File file = new File("/Users/zyq/Desktop/timg.jpeg");
+        FileInputStream fileInputStream = new FileInputStream(file);
+        for(int i = 0;i<100; i++){
+
+        }
     }
 }

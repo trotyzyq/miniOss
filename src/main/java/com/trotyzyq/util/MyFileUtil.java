@@ -30,6 +30,7 @@ import java.util.Map;
 @Component
 public class MyFileUtil {
 
+    /** 客户端配置类**/
     @Autowired
     private OssClientConfiger ossClientConfiger;
 

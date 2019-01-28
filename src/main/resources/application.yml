@@ -1,5 +1,11 @@
 server:
     port: 9002
+    tomcat:
+      uri-encoding: UTF-8
+      max-threads: 1000
+      max-connections: 2000
+      ## 最大线程数时
+      accept-count: 1000
 spring:
   http:
     multipart:
