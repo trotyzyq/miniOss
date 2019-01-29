@@ -50,7 +50,7 @@ public class ServerController {
      * @param params 验证参数
      * @return JsonObjectBO
      */
-    @RequestMapping(value = "/uploadFile",method = RequestMethod.POST)
+    @RequestMapping(value = "/upload-file",method = RequestMethod.POST)
     public JsonObjectBO uploadFile(HttpServletRequest request, String uploadSubPath, String token, String params){
         /** 文件列表 **/
         List<FileDataEntity>  fileList = new ArrayList<>();
@@ -67,7 +67,7 @@ public class ServerController {
             return new JsonObjectBO(ResponseCode.SERVER_ERROR, "系统错误",null);
         }
 
-        if(fileList.size() == 0 || StringUtil.isNull(uploadSubPath)){
+        if(fileList.size() == 0 || StringUtil.isNull(uploadSubPath)|| StringUtil.isNull(token)){
             return new JsonObjectBO(ResponseCode.INVALID_INPUT, "参数错误",null);
         }
 
