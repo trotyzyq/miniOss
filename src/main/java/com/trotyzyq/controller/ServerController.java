@@ -15,7 +15,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +30,6 @@ import java.util.*;
  * oss controller
  * @author zyq
  */
-@RequestMapping("/fileService")
 @RestController
 public class ServerController {
 
@@ -51,7 +49,7 @@ public class ServerController {
      * @param request
      * @return JsonObjectBO
      */
-    @RequestMapping(value = "/uploadFile",method = RequestMethod.POST)
+    @RequestMapping(value = "/uploadFile2",method = RequestMethod.POST)
     public JsonObjectBO uploadFile(HttpServletRequest request){
         ServletInputStream servletInputStream = null;
         String path = "";
@@ -90,7 +88,7 @@ public class ServerController {
      * @param params 验证参数
      * @return JsonObjectBO
      */
-    @RequestMapping(value = "/uploadFile2",method = RequestMethod.POST)
+    @RequestMapping(value = "/uploadFile",method = RequestMethod.POST)
     public JsonObjectBO uploadFile(HttpServletRequest request, String params){
         /** 文件列表 **/
         List<FileDataEntity>  fileList = new ArrayList<>();
@@ -117,18 +115,36 @@ public class ServerController {
             return new JsonObjectBO(ResponseCode.INVALID_INPUT, "解密错误",null);
         }
 
-        Map map = JSON.parseObject(decryptMsg, Map.class);
+        Map<String,String> map = JSON.parseObject(decryptMsg, Map.class);
         boolean deSignSuccess  = RsaSignature.rsaCheckV2(map,ossServerConfiger.getClientPublicKey());
 
         /** 判断解签是否相同 **/
         if(! deSignSuccess){
              return new JsonObjectBO(ResponseCode.INVALID_INPUT, "解签失败",null);
         }
+        /** 判断签名中的token是否相同**/
         if(! map.get("token").equals(ossServerConfiger.getToken())){
             return new JsonObjectBO(ResponseCode.INVALID_INPUT, "token无效",null);
         }
+        /** 验证路径是否存在**/
+        String uploadSubPath = map.get("uploadSubPath");
+        if(StringUtil.isNull(uploadSubPath)){
+            return new JsonObjectBO(ResponseCode.INVALID_INPUT, "请输入需要上传的子路径",null);
+        }
+        /** 验证文件名是否和上传的文件相同**/
+        String fileNames = map.get("fileNames");
+        /** 获取所有的文件名**/
+        StringBuilder sbFileNames = new StringBuilder();
+        for(int i = 0 ;i < fileList.size(); i++){
+            String fileName = fileList.get(i).getFileName();
+            sbFileNames.append(fileName + ";");
+        }
 
-        List<String> saveList = serverService.saveFile(fileList);
+        if(!fileNames.equals(sbFileNames.toString())){
+            return new JsonObjectBO(ResponseCode.INVALID_INPUT, "警告，文件已被修改!!!",null);
+        }
+
+        List<String> saveList = serverService.saveFile(fileList,uploadSubPath);
         if(saveList.size() > 0 && saveList.size() == fileList.size()){
             JSONObject jsonObject = new JSONObject();
             JSONArray jsonArray = new JSONArray();
@@ -163,19 +179,13 @@ public class ServerController {
 
     /**
      * 删除文件
-     * @param pathJson 文件路径json
+     * @param params 验证参数
      * @return  JsonObjectBO
      */
     @RequestMapping(value = "/delete",method = RequestMethod.POST)
-    public String deleteFile( String pathJson, String params) {
-        if(StringUtil.isNull(params) || StringUtil.isNull(pathJson)){
+    public String deleteFile(String params) {
+        if(StringUtil.isNull(params)){
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "参数错误",null));
-        }
-        JSONArray pathArray = null;
-        try {
-            pathArray = JSON.parseArray(pathJson);
-        }catch (Exception e){
-            return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "json参数异常",null));
         }
 
         /** 判断解密是否成功**/
@@ -183,7 +193,7 @@ public class ServerController {
         if(StringUtil.isNull(decryptMsg)){
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "解密错误",null));
         }
-        Map map = JSON.parseObject(decryptMsg, Map.class);
+        Map<String, String> map = JSON.parseObject(decryptMsg, Map.class);
         boolean deSignSuccess  = RsaSignature.rsaCheckV2(map,ossServerConfiger.getClientPublicKey());
 
         /** 判断解签是否相同 **/
@@ -195,6 +205,13 @@ public class ServerController {
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "token无效",null));
         }
 
+        String pathJson = map.get("pathJson");
+        JSONArray pathArray = null;
+        try {
+            pathArray = JSON.parseArray(pathJson);
+        }catch (Exception e){
+            return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "json参数异常",null));
+        }
 
         boolean success = false;
         List<String> copyList = new ArrayList<>();
@@ -203,22 +220,27 @@ public class ServerController {
             for(int i = 0; i < pathArray.size(); i++){
                 String path = pathArray.getString(i);
                 File deleteFile = new File(path);
+                if(!deleteFile.isFile() || !deleteFile.exists()){
+                    success  = false;
+                    logger.error(path + ":删除的路径不存在");
+                    break;
+                }
                 String copyPath = path + ".copy";
                 /** 将复制的保存下来**/
                 copyList.add(copyPath);
 
 
                 /** 删除之前先复制一份**/
-                FileInputStream fileInputStream = new FileInputStream(new File(path));
+                FileInputStream fileInputStream = new FileInputStream(deleteFile);
                 fileOutputStream = new FileOutputStream(new File(copyPath));
                 IOUtils.copy(fileInputStream, fileOutputStream);
 
-                if(deleteFile.exists() && deleteFile.isFile()){
-                    success = deleteFile.delete();
-                }
+                /** 删除文件 **/
+                success = deleteFile.delete();
             }
         } catch (Exception e) {
             e.printStackTrace();
+            logger.error("删除文件，系统异常");
             success  = false;
         }
 
@@ -227,6 +249,7 @@ public class ServerController {
             logger.info(JSON.toJSONString(pathArray) + "删除失败");
             for(int i =0 ;i< copyList.size();i++){
                 String copyPath = copyList.get(i);
+                /** 获取copy之前源文件路径，并copy过去**/
                 String path = copyPath.substring(0,copyPath.length()-5);
 
                 FileInputStream fileInputStream = null;
@@ -245,7 +268,7 @@ public class ServerController {
 
                 File file = new File(copyPath);
                 if(file.exists() && file.isFile()){
-                    success = file.delete();
+                     file.delete();
                 }
             }
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.SERVER_ERROR, "删除失败",null));
@@ -257,7 +280,7 @@ public class ServerController {
 
             File file = new File(copyPath);
             if(file.exists() && file.isFile()){
-                success = file.delete();
+                 file.delete();
             }
         }
 

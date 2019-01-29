@@ -30,10 +30,11 @@ public class ServerServiceImpl implements  IServerService {
     /**
      * 保存文件
      * @param fileList 文件列表
-     * @return 成功true,失败false;
+     * @param uploadSubPath 子路径
+     * @return 成功list,失败false;
      */
     @Override
-    public List<String> saveFile(List<FileDataEntity> fileList) {
+    public List<String> saveFile(List<FileDataEntity> fileList,String uploadSubPath) {
         boolean uploadSuccess = false;
         /** 保存成功的列表**/
         List<String> saveList = new ArrayList<>();
@@ -46,10 +47,10 @@ public class ServerServiceImpl implements  IServerService {
                 String endPatten = patten[patten.length - 1];
                 InputStream servletInputStream = null;
                 String date = TimeUtil.getNowDate();
-                String dicPath = ossServerConfiger.getPathDirectory() + date + "/";
+                String dicPath = ossServerConfiger.getPathDirectory() + uploadSubPath + "/" + date + "/";
                 File file = new File(dicPath);
                 if (!file.exists()) {
-                    file.mkdir();
+                    file.mkdirs();
                 }
                 /** 生成随机数文件并写入到文件夹**/
                 path = dicPath + TimeUtil.getCurrentTimeString().replaceAll("\\s", "")

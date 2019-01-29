@@ -45,7 +45,7 @@ public class MyFileUtil {
         Map map = new HashMap<>();
         map .put("timeStamp",System.currentTimeMillis() + "");
         map.put("token", ossClientConfiger.getToken());
-
+        map.put("pathJson",pathJson);
         /** 生成参数 **/
         String mapStr = RsaSignature.getSignCheckContentV2(map);
 
@@ -64,7 +64,6 @@ public class MyFileUtil {
             HttpPost httpPost = new HttpPost(url);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.addTextBody("params",enStr);
-            builder.addTextBody("pathJson",pathJson);
             HttpEntity entity = builder.build();
             httpPost.setEntity(entity);
             HttpResponse response = httpClient.execute(httpPost);// 执行提交
@@ -94,13 +93,23 @@ public class MyFileUtil {
     /**
      * 表单提交文件
      * @param url 提交服务器路径
+     * @param uploadSubPath 子路径
      * @param fileList 文件
      * @return 成功：全路径，失败null
      */
-    public  List<String> uploadFileWithForm(String url, List<FileDataEntity> fileList) {
+    public  List<String> uploadFileWithForm(String url,String uploadSubPath, List<FileDataEntity> fileList) {
+        /** 获取所有的文件名**/
+        StringBuilder fileNames = new StringBuilder();
+        for(int i = 0 ;i < fileList.size(); i++){
+            String fileName = fileList.get(i).getFileName();
+            fileNames.append(fileName + ";");
+        }
+
         Map map = new HashMap<>();
         map .put("timeStamp",System.currentTimeMillis() + "");
         map.put("token", ossClientConfiger.getToken());
+        map.put("uploadSubPath", uploadSubPath);
+        map.put("fileNames", fileNames.toString());
 
         /** 生成参数 **/
         String mapStr = RsaSignature.getSignCheckContentV2(map);

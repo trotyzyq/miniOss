@@ -31,7 +31,7 @@ public class TestController {
     private MyFileUtil myFileUtil;
     /** 测试提交**/
     @RequestMapping("/test1")
-    public String test(MultipartFile m1){
+    public String test(MultipartFile m1, MultipartFile m2 , MultipartFile m3){
         List<String> pathList = null;
         try {
             String fileName = m1.getOriginalFilename();
@@ -39,19 +39,19 @@ public class TestController {
             List<FileDataEntity> flleList = new ArrayList<>();
             flleList.add(fileDataEntity);
 
-//            fileName = m2.getOriginalFilename();
-//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-//            flleList.add(fileDataEntity);
-//
-//            fileName = m3.getOriginalFilename();
-//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-//            flleList.add(fileDataEntity);
+            fileName = m2.getOriginalFilename();
+            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+            flleList.add(fileDataEntity);
+
+            fileName = m3.getOriginalFilename();
+            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+            flleList.add(fileDataEntity);
 //
 //            fileName = m4.getOriginalFilename();
 //            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
 //            flleList.add(fileDataEntity);
 
-            pathList = myFileUtil.uploadFileWithForm(ossClientConfiger.getOssServerUrl(),flleList);
+            pathList = myFileUtil.uploadFileWithForm(ossClientConfiger.getOssServerUrl(),"ups/age",flleList);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -65,7 +65,7 @@ public class TestController {
         jsonArray.add(path1);
         jsonArray.add(path2);
         jsonArray.add(path3);
-        jsonArray.add(path4);
+//        jsonArray.add(path4);
         String pathJson = jsonArray.toJSONString();
         boolean s2 = myFileUtil.deleteFile(ossClientConfiger.getDeleteServerUrl(), pathJson);
         System.out.println(s2);
