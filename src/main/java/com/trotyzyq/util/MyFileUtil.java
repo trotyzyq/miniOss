@@ -10,6 +10,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -127,8 +128,7 @@ public class MyFileUtil {
         String result = "";
         try {
             HttpPost httpPost = new HttpPost(url);
-            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.setCharset(Charset.forName("UTF-8"));
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create().setMode(HttpMultipartMode.RFC6532);
 
 
             for(int i =0 ;i < fileList.size() ;i++){
