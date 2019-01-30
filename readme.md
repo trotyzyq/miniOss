@@ -13,15 +13,15 @@
 被套路了吧，哈哈。当然如果需要，可自行配置nginx反向代理即可支持，证书的话自己想办法。。。
 
 ## 软件使用
-### 创建根目录文件夹
+### 1.创建根目录文件夹
 
-### 安装环境
+### 2.安装环境
 1. 安装jdk即可，7或者8都行。
 2. 安装`gradle`，如果不想安装`gradle`,只想用`maven`，就复制里面的源码吧~~~
-### 下载源码
+### 3.下载源码
 1. download或者clone源码，打包成jar包
 
-### 修改yml配置文件
+### 4.修改yml配置文件
 ```
 ossServer:   //服务端配置
   pathDirectory: /upload/  需要保存的服务器根目录
@@ -44,7 +44,7 @@ ossClient:
 
 ### 使用工具类 -FileUtil
 <font color=red>具体可以查看TestController进行测试</font>
-#### 上传文件
+#### 1.上传文件
 ```
 String fileName = m1.getOriginalFilename();
 FileDataEntity fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
@@ -53,7 +53,7 @@ flleList.add(fileDataEntity);
 pathList = myFileUtil.uploadFileWithForm(ossClientConfiger.getOssServerUrl(),"ups/age",flleList);
 ```
 
-#### 删除文件
+#### 2.删除文件
 ```
 @RequestMapping("/test2")
 public boolean test(String path1, String path2 , String path3, String path4){
@@ -68,12 +68,12 @@ public boolean test(String path1, String path2 , String path3, String path4){
 }
 ```
 
-#### 文件读取
+#### 3.文件读取
 类似于img 的src属性   
 get http://www.insistself.cn:8080/getFile  
 参数:path  注释:文件路径  
 
-### 下载
+### 4.下载
 浏览器提交  
 http://www.insistself.cn:9002/download  
 参数:path 注释:文件路径  
