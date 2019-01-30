@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,13 +36,13 @@ public class TestController {
             List<FileDataEntity> flleList = new ArrayList<>();
             flleList.add(fileDataEntity);
 
-            fileName = m2.getOriginalFilename();
-            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-            flleList.add(fileDataEntity);
-
-            fileName = m3.getOriginalFilename();
-            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
-            flleList.add(fileDataEntity);
+//            fileName = m2.getOriginalFilename();
+//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+//            flleList.add(fileDataEntity);
+//
+//            fileName = m3.getOriginalFilename();
+//            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
+//            flleList.add(fileDataEntity);
 //
 //            fileName = m4.getOriginalFilename();
 //            fileDataEntity = new FileDataEntity(fileName, m1.getInputStream());
@@ -71,12 +68,8 @@ public class TestController {
         System.out.println(s2);
         return s2;
     }
-
-    public static void main(String[] args) throws FileNotFoundException {
-        File file = new File("/Users/zyq/Desktop/timg.jpeg");
-        FileInputStream fileInputStream = new FileInputStream(file);
-        for(int i = 0;i<100; i++){
-
-        }
+    @RequestMapping("/test3")
+    public String test3(){
+        return "xxx";
     }
 }

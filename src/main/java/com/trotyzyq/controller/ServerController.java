@@ -123,7 +123,7 @@ public class ServerController {
              return new JsonObjectBO(ResponseCode.INVALID_INPUT, "解签失败",null);
         }
         /** 判断签名中的token是否相同**/
-        if(! map.get("token").equals(ossServerConfiger.getToken())){
+        if(! ossServerConfiger.getToken().equals(map.get("token"))){
             return new JsonObjectBO(ResponseCode.INVALID_INPUT, "token无效",null);
         }
         /** 验证路径是否存在**/
@@ -166,13 +166,14 @@ public class ServerController {
         try {
             outputStream = response.getOutputStream();
             File file = new File(path);
-            if(!file.exists()){
+            if(!file.exists() || !file.isFile()){
                 outputStream.write("no this file".getBytes());
                 return;
             }
-            FileInputStream fileInputStream =new FileInputStream(new File(path));
+            FileInputStream fileInputStream =new FileInputStream(file);
             IOUtils.copy(fileInputStream,outputStream);
         } catch (IOException e) {
+            logger.error("获取文件,系统异常， 路径：{}",path);
             e.printStackTrace();
         }
     }
@@ -201,7 +202,7 @@ public class ServerController {
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "解签失败",null));
         }
         /** 判断token是否相同 **/
-        if(! map.get("token").equals(ossServerConfiger.getToken())){
+        if(! ossServerConfiger.getToken().equals(map.get("token"))){
             return JSON.toJSONString(new JsonObjectBO(ResponseCode.INVALID_INPUT, "token无效",null));
         }
 
